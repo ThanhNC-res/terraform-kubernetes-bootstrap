@@ -1,0 +1,44 @@
+import:
+vars:
+  stage: "dev"
+
+terraform:
+  vars: {}
+
+components:
+  terraform:
+    k8s-infra:
+      vars:
+        aws_profile: "thanha3k51-profile"
+        region: "ap-southeast-1"
+        general_tags: { env: "test", tool: "terraform-atmos" }
+        vpc_cidr: "10.0.0.0/16"
+        public_subnet: "10.0.1.0/24"
+        private_subnet: "10.0.2.0/24"
+        private_instance_params:
+          {
+            instance_count: 1,
+            ami_id: "ami-065a492fef70f84b1",
+            key_name: "thanhnc-test",
+            instance_type: "t3.micro",
+          }
+        public_instance_params:
+          {
+            instance_count: 1,
+            ami_id: "ami-065a492fef70f84b1",
+            key_name: "thanhnc-test",
+            instance_type: "t3.micro",
+          }
+
+workflows:
+  deploy-infra:
+    description: Deploy terraform project
+    steps:
+      - job: terraform plan k8s-infra
+      - job: terraform deploy k8s-infra
+
+  destroy-infra:
+    description: Destroy terraform project
+    steps:
+      - job: terraform plan k8s-infra
+      - job: terraform destroy k8s-infra --auto-approve
