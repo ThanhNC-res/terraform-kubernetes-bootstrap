@@ -94,9 +94,16 @@ resource "aws_security_group" "private_sg" {
 
   ingress {
     from_port   = 0
-    to_port     = 65535
-    protocol    = "tcp"
+    to_port     = 0
+    protocol    = "-1"
     cidr_blocks = ["10.0.0.0/16"]
+  }
+
+  ingress {
+    from_port       = 0
+    to_port         = 0
+    protocol        = "-1"
+    security_groups = [aws_security_group.public_sg.id]
   }
 
   egress {
@@ -119,6 +126,14 @@ resource "aws_security_group" "public_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+  ingress {
+    description = "k8s components port from anywhere"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["10.0.0.0/16"]
+  }
+
   egress {
     description = "Allow all outbound traffic"
     from_port   = 0
@@ -127,7 +142,6 @@ resource "aws_security_group" "public_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 }
-
 
 resource "aws_instance" "public_ec2" {
   count                  = var.public_instance_params.instance_count
@@ -151,7 +165,7 @@ resource "aws_instance" "private_ec2" {
   subnet_id              = aws_subnet.private.id
   key_name               = var.private_instance_params.key_name
   iam_instance_profile   = aws_iam_instance_profile.ssm_profile.name
-  vpc_security_group_ids = [aws_security_group.public_sg.id]
+  vpc_security_group_ids = [aws_security_group.private_sg.id]
 
   user_data = <<-EOF
             #!/bin/bash
